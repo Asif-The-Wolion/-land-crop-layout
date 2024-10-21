@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Layout Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        canvas {
+            border: 1px solid #000;
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="container mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-center mb-6">Farm Layout Calculator</h1>
+        <p class="text-center text-gray-600 mb-8">Enter the dimensions below to calculate the layout and visualize the farm in feet and inches.</p>
+
+        <div class="flex justify-center">
+            <form id="farmForm" class="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full space-y-4">
+                <!-- Inputs for all land and bed parameters -->
+                <div>
+                    <label for="landLengthFeet" class="block text-sm font-medium text-gray-700">Land Length (ft):</label>
+                    <div class="flex space-x-2">
+                        <input type="number" id="landLengthFeet" placeholder="Feet" class="w-full border rounded px-2 py-1" required>
+                        <input type="number" id="landLengthInches" placeholder="Inches" class="w-full border rounded px-2 py-1" required>
+                    </div>
+                </div>
+                <div>
+                    <label for="landWidthFeet" class="block text-sm font-medium text-gray-700">Land Width (ft):</label>
+                    <div class="flex space-x-2">
+                        <input type="number" id="landWidthFeet" placeholder="Feet" class="w-full border rounded px-2 py-1" required>
+                        <input type="number" id="landWidthInches" placeholder="Inches" class="w-full border rounded px-2 py-1" required>
+                    </div>
+                </div>
+                <div>
+                    <label for="mainChannelWidthFeet" class="block text-sm font-medium text-gray-700">Main Water Channel Width (ft):</label>
+                    <div class="flex space-x-2">
+                        <input type="number" id="mainChannelWidthFeet" placeholder="Feet" class="w-full border rounded px-2 py-1" required>
+                        <input type="number" id="mainChannelWidthInches" placeholder="Inches" class="w-full border rounded px-2 py-1" required>
+                    </div>
+                </div>
+                <div>
+                    <label for="subChannelWidthFeet" class="block text-sm font-medium text-gray-700">Sub Water Channel Width (ft):</label>
+                    <div class="flex space-x-2">
+                        <input type="number" id="subChannelWidthFeet" placeholder="Feet" class="w-full border rounded px-2 py-1" required>
+                        <input type="number" id="subChannelWidthInches" placeholder="Inches" class="w-full border rounded px-2 py-1" required>
+                    </div>
+                </div>
+                <div>
+                    <label for="bedLengthFeet" class="block text-sm font-medium text-gray-700">Bed Length (ft):</label>
+                    <div class="flex space-x-2">
+                        <input type="number" id="bedLengthFeet" placeholder="Feet" class="w-full border rounded px-2 py-1" required>
+                        <input type="number" id="bedLengthInches" placeholder="Inches" class="w-full border rounded px-2 py-1" required>
+                    </div>
+                </div>
+                <div>
+                    <label for="bedWidthFeet" class="block text-sm font-medium text-gray-700">Bed Width (ft):</label>
+                    <div class="flex space-x-2">
+                        <input type="number" id="bedWidthFeet" placeholder="Feet" class="w-full border rounded px-2 py-1" required>
+                        <input type="number" id="bedWidthInches" placeholder="Inches" class="w-full border rounded px-2 py-1" required>
+                    </div>
+                </div>
+                <div>
+                    <label for="cropSpacingFeet" class="block text-sm font-medium text-gray-700">Crop Spacing (ft):</label>
+                    <div class="flex space-x-2">
+                        <input type="number" id="cropSpacingFeet" placeholder="Feet" class="w-full border rounded px-2 py-1" required>
+                        <input type="number" id="cropSpacingInches" placeholder="Inches" class="w-full border rounded px-2 py-1" required>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded">Calculate</button>
+            </form>
+        </div>
+
+        <!-- Canvas and legend -->
+        <div class="mt-6 flex justify-center space-x-4">
+            <canvas id="farmCanvas" width="600" height="600"></canvas>
+            <div id="legend" class="text-gray-700">
+                <p class="font-bold">Legend:</p>
+                <ul>
+                    <li><span style="color: blue;">Blue</span> - Main Water Channels</li>
+                    <li><span style="color: lightblue;">Light Blue</span> - Sub Water Channels</li>
+                    <li><span style="color: green;">Green</span> - Beds</li>
+                    <li><span style="color: brown;">Brown</span> - Crops</li>
+                    <li><span style="color: red;">Red</span> - Bed Boundaries</li>
+                </ul>
+                <p class="mt-4">Note: The layout illustrates the placement of beds, main water channels, and sub-water channels. Each bed is color-coded to help distinguish where one bed ends and another begins.</p>
+            </div>
+        </div>
+
+        <div id="result" class="text-gray-700 mt-6 text-center"></div>
+    </div>
+
+    <script>
+        function convertToInches(feet, inches) {
+            return (feet * 12) + inches;
+        }
+
+        function formatInchesToFeet(inches) {
+            const feet = Math.floor(inches / 12);
+            const remainingInches = inches % 12;
+            return `${feet} ft ${remainingInches} in`;
+        }
+
+        document.getElementById('farmForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Get inputs and convert to inches
+            const landLength = convertToInches(
+                parseFloat(document.getElementById('landLengthFeet').value),
+                parseFloat(document.getElementById('landLengthInches').value)
+            );
+            const landWidth = convertToInches(
+                parseFloat(document.getElementById('landWidthFeet').value),
+                parseFloat(document.getElementById('landWidthInches').value)
+            );
+            const mainChannelWidth = convertToInches(
+                parseFloat(document.getElementById('mainChannelWidthFeet').value),
+                parseFloat(document.getElementById('mainChannelWidthInches').value)
+            );
+            const subChannelWidth = convertToInches(
+                parseFloat(document.getElementById('subChannelWidthFeet').value),
+                parseFloat(document.getElementById('subChannelWidthInches').value)
+            );
+            const bedLength = convertToInches(
+                parseFloat(document.getElementById('bedLengthFeet').value),
+                parseFloat(document.getElementById('bedLengthInches').value)
+            );
+            const bedWidth = convertToInches(
+                parseFloat(document.getElementById('bedWidthFeet').value),
+                parseFloat(document.getElementById('bedWidthInches').value)
+            );
+            const cropSpacing = convertToInches(
+                parseFloat(document.getElementById('cropSpacingFeet').value),
+                parseFloat(document.getElementById('cropSpacingInches').value)
+            );
+
+            // Calculations
+            const availableWidth = landWidth - 2 * mainChannelWidth;
+            const bedsPerRow = Math.floor(availableWidth / (bedWidth + subChannelWidth));
+            const bedRows = Math.floor(landLength / bedLength);
+            const totalBeds = bedsPerRow * bedRows;
+
+            const cropsPerBedLength = Math.floor(bedLength / cropSpacing);
+            const cropsPerBedWidth = Math.floor(bedWidth / cropSpacing);
+            const cropsPerBed = cropsPerBedLength * cropsPerBedWidth;
+            const totalCrops = totalBeds * cropsPerBed;
+
+            // Display results
+            document.getElementById('result').innerHTML = `
+                <p class="font-bold">Results:</p>
+                <p>Total Beds: ${totalBeds}</p>
+                <p>Crops per Bed: ${cropsPerBed}</p>
+                <p>Total Crops: ${totalCrops}</p>
+            `;
+
+            // Drawing the farm layout
+            const canvas = document.getElementById('farmCanvas');
+            const ctx = canvas.getContext('2d');
+            const scaleX = canvas.width / landWidth;
+            const scaleY = canvas.height / landLength;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw main water channels
+            ctx.fillStyle = 'blue';  // Main channel color
+            ctx.fillRect(0, 0, mainChannelWidth * scaleX, landLength * scaleY);  // Left channel
+            ctx.fillRect((landWidth - mainChannelWidth) * scaleX, 0, mainChannelWidth * scaleX, landLength * scaleY);  // Right channel
+
+            let startX = mainChannelWidth * scaleX;
+            let startY = 0;
+
+            for (let i = 0; i < bedRows; i++) {
+                for (let j = 0; j < bedsPerRow; j++) {
+                    // Draw bed
+                    ctx.fillStyle = '#228B22';  // Green for beds
+                    ctx.fillRect(startX, startY, bedWidth * scaleX, bedLength * scaleY);
+
+                    // Mark bed boundaries in red
+                    ctx.strokeStyle = 'red';  // Red for bed boundaries
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(startX, startY, bedWidth * scaleX, bedLength * scaleY);
+
+                    // Draw crops inside bed
+                    const cropSpacingX = bedWidth / cropsPerBedWidth * scaleX;
+                    const cropSpacingY = bedLength / cropsPerBedLength * scaleY;
+                    ctx.fillStyle = '#8B4513';  // Brown for crops
+                    for (let cx = 0; cx < cropsPerBedWidth; cx++) {
+                        for (let cy = 0; cy < cropsPerBedLength; cy++) {
+                            ctx.beginPath();
+                            ctx.arc(
+                                startX + (cx + 0.5) * cropSpacingX,  // Crop X coordinate
+                                startY + (cy + 0.5) * cropSpacingY,  // Crop Y coordinate
+                                Math.min(cropSpacingX, cropSpacingY) / 5,  // Crop size relative to spacing
+                                0, Math.PI * 2
+                            );
+                            ctx.fill();
+                        }
+                    }
+
+                    // Move X for next bed and sub-channel
+                    startX += (bedWidth + subChannelWidth) * scaleX;
+
+                    // Draw sub-water channel
+                    if (j < bedsPerRow - 1) {
+                        ctx.fillStyle = 'lightblue';  // Light blue for sub-water channels
+                        ctx.fillRect(startX - subChannelWidth * scaleX, startY, subChannelWidth * scaleX, bedLength * scaleY);
+                    }
+                }
+                // Move Y for next row
+                startY += bedLength * scaleY;
+                startX = mainChannelWidth * scaleX;
+            }
+        });
+    </script>
+</body>
+</html>
